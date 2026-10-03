@@ -426,7 +426,16 @@ struct GearGraphics {
     virtual uint32_t GetNumberOfScreens() { return GetSystemMetrics(SM_CMONITORS); }
 
     virtual void GetPrimaryScreenResolution(uint32_t* x, uint32_t* y) {
-        RECT rect;
+        // Display modes use physical pixels; GetWindowRect is DPI-virtualized.
+        DEVMODEA mode = {};
+        mode.dmSize = sizeof(mode);
+        if (EnumDisplaySettingsA(NULL, ENUM_CURRENT_SETTINGS, &mode)) {
+            *x = mode.dmPelsWidth;
+            *y = mode.dmPelsHeight;
+            return;
+        }
+
+        RECT rect = {};
         GetWindowRect(GetDesktopWindow(), &rect);
         *x = rect.right - rect.left;
         *y = rect.bottom - rect.top;
